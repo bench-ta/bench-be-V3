@@ -1,4 +1,5 @@
 // src/models/mysql/ExecutionTime.js
+
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/mysql');
 
@@ -10,8 +11,8 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
     },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true, // This will store the MongoDB _id as a string
-        defaultValue: null
+        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
+        defaultValue: true
     },
     javascriptType: {
         type: DataTypes.STRING,
@@ -47,7 +48,7 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
     }
 }, {
     tableName: 'ExecutionTimes',
-    timestamps: false // Using manually managed timestamps
+    timestamps: false // Menggunakan timestamp manual
 });
 
 module.exports = ExecutionTime;

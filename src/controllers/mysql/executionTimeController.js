@@ -1,13 +1,12 @@
-// src/controllers/mysql/executionTimeController.js
 const ExecutionTime = require('../../models/mysql/ExecutionTime');
-const { performance } = require('perf_hooks');
-const escomplex = require('escomplex');
-const { v4: uuidv4 } = require('uuid');
 const os = require('os');
 const si = require('systeminformation');
+const escomplex = require('escomplex');
+const { performance } = require('perf_hooks');
+const { ObjectId } = require('bson'); // Tambahkan pustaka bson
 
 exports.startBenchmark = async (req, res) => {
-    const { testType, testCodes, testConfig, javascriptType, mongoId } = req.body;
+    const { testType, testCodes, testConfig, javascriptType } = req.body;
 
     if (!testType || !testCodes || !testConfig || !javascriptType) {
         return res.status(400).json({ success: false, error: "Please provide all required fields." });
@@ -45,8 +44,11 @@ exports.startBenchmark = async (req, res) => {
 
         const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageExecutionTime), 0) / results.length;
 
+        // Buat mongoId baru menggunakan ObjectId dari bson
+        const mongoId = new ObjectId().toString();
+
         const benchmark = await ExecutionTime.create({
-            mongoId, // Optional MongoDB ID
+            mongoId, // Menggunakan mongoId yang baru dibuat
             javascriptType,
             testType,
             testConfig,
@@ -64,32 +66,32 @@ exports.startBenchmark = async (req, res) => {
             arch: os.arch()
         };
 
-        // Prepare hardware information
-        let hardwareInfo;
+        let systemInfo;
         try {
-            const systemInfo = await si.getStaticData();
-            hardwareInfo = {
-                os: osInfo,
-                cpu: {
-                    model: cpuInfo.model,
-                    speed: `${cpuInfo.speed} MHz`
-                },
-                totalMemory: `${totalMemoryGB} GB`,
-                freeMemory: `${freeMemoryGB} GB`,
-                gpu: systemInfo.graphics.controllers.map(gpu => ({
-                    model: gpu.model,
-                    vram: gpu.vram ? `${gpu.vram} MB` : 'N/A'
-                })),
-                system: {
-                    manufacturer: systemInfo.system.manufacturer,
-                    model: systemInfo.system.model,
-                    version: systemInfo.system.version
-                }
-            };
-        } catch (err) {
-            console.error('Failed to retrieve system information:', err);
-            hardwareInfo = {};
+            systemInfo = await si.getStaticData();
+        } catch (error) {
+            console.error('Failed to retrieve system information:', error);
+            systemInfo = {}; // Use an empty object if unable to retrieve system info
         }
+
+        const hardwareInfo = {
+            os: osInfo,
+            cpu: {
+                model: cpuInfo.model,
+                speed: `${cpuInfo.speed} MHz`
+            },
+            totalMemory: `${totalMemoryGB} GB`,
+            freeMemory: `${freeMemoryGB} GB`,
+            gpu: systemInfo.graphics ? systemInfo.graphics.controllers.map(gpu => ({
+                model: gpu.model,
+                vram: gpu.vram ? `${gpu.vram} MB` : 'N/A'
+            })) : [{ model: 'Not available', vram: 'N/A' }],
+            system: systemInfo.system ? {
+                manufacturer: systemInfo.system.manufacturer,
+                model: systemInfo.system.model,
+                version: systemInfo.system.version
+            } : { manufacturer: 'Not available', model: 'Not available', version: 'Not available' }
+        };
 
         res.status(201).json({
             success: true,

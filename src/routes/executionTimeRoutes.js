@@ -1,9 +1,29 @@
 // src/routes/executionTimeRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const executionTimeController = require('../controllers/executionTimeController');
+const mongoController = require('../controllers/mongo/executionTimeController');
+const mysqlController = require('../controllers/mysql/executionTimeController');
+const { checkDatabaseStatus } = require('../config/handlers');
 
-// Route to start benchmark
-router.post('/start', executionTimeController.startBenchmark);
+const getController = async () => {
+    const dbStatus = await checkDatabaseStatus();
+    if (dbStatus.mongoConnected) {
+        return mongoController; // MongoDB sebagai default jika terhubung
+    } else if (dbStatus.mysqlConnected) {
+        return mysqlController;
+    }
+    throw new Error('No database connection available');
+};
+
+router.post('/start', async (req, res) => {
+    try {
+        const controller = await getController();
+        await controller.startBenchmark(req, res);
+    } catch (error) {
+        console.error('Error in /start route:', error.message);
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
