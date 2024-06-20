@@ -12,7 +12,7 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
     mongoId: {
         type: DataTypes.STRING(24),
         allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
-        defaultValue: true
+        
     },
     javascriptType: {
         type: DataTypes.STRING,

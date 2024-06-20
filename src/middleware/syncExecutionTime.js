@@ -2,49 +2,26 @@ const ExecutionTimeMongo = require('../models/mongo/ExecutionTime');
 const ExecutionTimeMySQL = require('../models/mysql/ExecutionTime');
 const { checkDatabaseStatus } = require('../config/handlers');
 const { ObjectId } = require('bson');
+
+const isValidObjectId = (id) => {
+    return ObjectId.isValid(id) && new ObjectId(id).toString() === id;
+};
+
 const syncExecutionTime = async () => {
     const status = await checkDatabaseStatus();
 
     if (status.mongoConnected && status.mysqlConnected) {
         console.log('Both databases are connected. Synchronizing data...');
 
-        // Sync from MySQL to MongoDB
-        const mysqlExecutionTimes = await ExecutionTimeMySQL.findAll({ where: { isDeleted: false } });
-        for (const execTime of mysqlExecutionTimes) {
-            // Cek jika mongoId null, skip karena itu berarti data belum sinkron ke MongoDB
-            if (!execTime.mongoId) continue;
-
-            const existingExecTime = await ExecutionTimeMongo.findOne({ _id: execTime.mongoId });
-            if (!existingExecTime || new Date(execTime.updatedAt) > new Date(existingExecTime.updatedAt)) {
-                await ExecutionTimeMongo.findOneAndUpdate(
-                    { _id: execTime.mongoId }, // Gunakan mongoId dari MySQL
-                    {
-                        javascriptType: execTime.javascriptType,
-                        testType: execTime.testType,
-                        testConfig: execTime.testConfig,
-                        results: execTime.results,
-                        overallAverage: execTime.overallAverage,
-                        isDeleted: execTime.isDeleted,
-                        createdAt: execTime.createdAt,
-                        updatedAt: execTime.updatedAt
-                    },
-                    { upsert: true, new: true }
-                );
-                console.log(`ExecutionTime ${execTime.id} synced from MySQL to MongoDB`);
-            }
-        }
-
         // Sync from MongoDB to MySQL
         const mongoExecutionTimes = await ExecutionTimeMongo.find({ isDeleted: false });
         for (const execTime of mongoExecutionTimes) {
-            if (!execTime._id) continue; // Skip if mongoId is not present
-
-            const existingExecTime = await ExecutionTimeMySQL.findOne({ where: { mongoId: execTime._id.toString() } });
+            let mongoIdStr = execTime._id.toString();
+            const existingExecTime = await ExecutionTimeMySQL.findOne({ where: { mongoId: mongoIdStr } });
 
             if (!existingExecTime) {
-                // Create new entry if it doesn't exist
                 await ExecutionTimeMySQL.create({
-                    mongoId: execTime._id.toString(),
+                    mongoId: mongoIdStr,
                     javascriptType: execTime.javascriptType,
                     testType: execTime.testType,
                     testConfig: execTime.testConfig,
@@ -54,9 +31,8 @@ const syncExecutionTime = async () => {
                     createdAt: execTime.createdAt,
                     updatedAt: execTime.updatedAt
                 });
-                console.log(`ExecutionTime ${execTime._id} added from MongoDB to MySQL`);
+                console.log(`ExecutionTime ${mongoIdStr} added from MongoDB to MySQL`);
             } else if (new Date(execTime.updatedAt) > new Date(existingExecTime.updatedAt)) {
-                // Update existing entry if the MongoDB data is newer
                 await ExecutionTimeMySQL.update({
                     javascriptType: execTime.javascriptType,
                     testType: execTime.testType,
@@ -66,26 +42,47 @@ const syncExecutionTime = async () => {
                     isDeleted: execTime.isDeleted,
                     createdAt: execTime.createdAt,
                     updatedAt: execTime.updatedAt
-                }, {
-                    where: { mongoId: execTime._id.toString() }
-                });
-                console.log(`ExecutionTime ${execTime._id} updated from MongoDB to MySQL`);
+                }, { where: { mongoId: mongoIdStr } });
+                console.log(`ExecutionTime ${mongoIdStr} updated from MongoDB to MySQL`);
             }
         }
 
-    } else if (status.mysqlConnected) {
-        console.log('Only MySQL is connected. Checking MySQL for unsynced benchmarks.');
-
+        // Sync from MySQL to MongoDB
         const mysqlExecutionTimes = await ExecutionTimeMySQL.findAll({ where: { isDeleted: false } });
         for (const execTime of mysqlExecutionTimes) {
-            if (!execTime.mongoId) {
-                // Generate a new ObjectId for MongoDB
-                execTime.mongoId = new ObjectId().toString(); 
-                await execTime.save();
+            if (execTime.mongoId && isValidObjectId(execTime.mongoId)) {
+                const existingExecTime = await ExecutionTimeMongo.findById(execTime.mongoId);
+                if (!existingExecTime) {
+                    let newExecTime = new ExecutionTimeMongo({
+                        _id: execTime.mongoId, // Use MySQL's mongoId to keep IDs consistent
+                        javascriptType: execTime.javascriptType,
+                        testType: execTime.testType,
+                        testConfig: execTime.testConfig,
+                        results: execTime.results,
+                        overallAverage: execTime.overallAverage,
+                        isDeleted: execTime.isDeleted,
+                        createdAt: execTime.createdAt,
+                        updatedAt: execTime.updatedAt
+                    });
+                    await newExecTime.save();
+                    console.log(`ExecutionTime ${execTime.mongoId} added from MySQL to MongoDB`);
+                } else if (new Date(execTime.updatedAt) > new Date(existingExecTime.updatedAt)) {
+                    await ExecutionTimeMongo.findByIdAndUpdate(execTime.mongoId, {
+                        javascriptType: execTime.javascriptType,
+                        testType: execTime.testType,
+                        testConfig: execTime.testConfig,
+                        results: execTime.results,
+                        overallAverage: execTime.overallAverage,
+                        isDeleted: execTime.isDeleted,
+                        createdAt: execTime.createdAt,
+                        updatedAt: execTime.updatedAt
+                    }, { new: true });
+                    console.log(`ExecutionTime ${execTime.mongoId} updated from MySQL to MongoDB`);
+                }
             }
         }
     } else {
-        console.log('No databases are connected. Skipping synchronization.');
+        console.log('One or both databases are not connected. Skipping synchronization.');
     }
 };
 

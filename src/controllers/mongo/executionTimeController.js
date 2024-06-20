@@ -1,6 +1,6 @@
 // src/controllers/mysql/executionTimeController.js
 
-const ExecutionTime = require('../../models/mysql/ExecutionTime');
+const ExecutionTime = require('../../models/mongo/ExecutionTime');
 const os = require('os');
 const si = require('systeminformation');
 const escomplex = require('escomplex');
