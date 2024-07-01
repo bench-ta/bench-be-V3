@@ -1,3 +1,4 @@
+// src/middleware/syncAsyncPerformance.js
 const AsyncPerformanceBenchmarkMongo = require('../models/mongo/AsyncPerformanceBenchmark');
 const AsyncPerformanceBenchmarkMySQL = require('../models/mysql/AsyncPerformanceBenchmark');
 const { checkDatabaseStatus } = require('../config/handlers');
@@ -22,29 +23,26 @@ const syncAsyncPerformance = async () => {
             if (!existingBenchmark) {
                 await AsyncPerformanceBenchmarkMySQL.create({
                     mongoId: mongoIdStr,
+                    javascriptType: benchmark.javascriptType,
                     testType: benchmark.testType,
-                    testCode: benchmark.testCode,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
-                    averageAsyncExecution: benchmark.averageAsyncExecution,
-                    totalAverageAsyncExecution: benchmark.totalAverageAsyncExecution,
-                    timestamp: benchmark.timestamp,
-                    javascriptType: benchmark.javascriptType,
+                    overallAverage: benchmark.overallAverage,
+                    isDeleted: benchmark.isDeleted,
                     createdAt: benchmark.createdAt,
                     updatedAt: benchmark.updatedAt
                 });
                 console.log(`AsyncPerformanceBenchmark ${mongoIdStr} added from MongoDB to MySQL`);
             } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                 await AsyncPerformanceBenchmarkMySQL.update({
+                    javascriptType: benchmark.javascriptType,
                     testType: benchmark.testType,
-                    testCode: benchmark.testCode,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
-                    averageAsyncExecution: benchmark.averageAsyncExecution,
-                    totalAverageAsyncExecution: benchmark.totalAverageAsyncExecution,
-                    timestamp: benchmark.timestamp,
-                    javascriptType: benchmark.javascriptType,
-                    updatedAt: new Date()
+                    overallAverage: benchmark.overallAverage,
+                    isDeleted: benchmark.isDeleted,
+                    createdAt: benchmark.createdAt,
+                    updatedAt: benchmark.updatedAt
                 }, { where: { mongoId: mongoIdStr } });
                 console.log(`AsyncPerformanceBenchmark ${mongoIdStr} updated from MongoDB to MySQL`);
             }
@@ -56,16 +54,14 @@ const syncAsyncPerformance = async () => {
             if (benchmark.mongoId && isValidObjectId(benchmark.mongoId)) {
                 const existingBenchmark = await AsyncPerformanceBenchmarkMongo.findById(benchmark.mongoId);
                 if (!existingBenchmark) {
-                    const newBenchmark = new AsyncPerformanceBenchmarkMongo({
+                    let newBenchmark = new AsyncPerformanceBenchmarkMongo({
                         _id: benchmark.mongoId,
+                        javascriptType: benchmark.javascriptType,
                         testType: benchmark.testType,
-                        testCode: benchmark.testCode,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
-                        averageAsyncExecution: benchmark.averageAsyncExecution,
-                        totalAverageAsyncExecution: benchmark.totalAverageAsyncExecution,
-                        timestamp: benchmark.timestamp,
-                        javascriptType: benchmark.javascriptType,
+                        overallAverage: benchmark.overallAverage,
+                        isDeleted: benchmark.isDeleted,
                         createdAt: benchmark.createdAt,
                         updatedAt: benchmark.updatedAt
                     });
@@ -73,15 +69,14 @@ const syncAsyncPerformance = async () => {
                     console.log(`AsyncPerformanceBenchmark ${benchmark.mongoId} added from MySQL to MongoDB`);
                 } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                     await AsyncPerformanceBenchmarkMongo.findByIdAndUpdate(benchmark.mongoId, {
+                        javascriptType: benchmark.javascriptType,
                         testType: benchmark.testType,
-                        testCode: benchmark.testCode,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
-                        averageAsyncExecution: benchmark.averageAsyncExecution,
-                        totalAverageAsyncExecution: benchmark.totalAverageAsyncExecution,
-                        timestamp: benchmark.timestamp,
-                        javascriptType: benchmark.javascriptType,
-                        updatedAt: new Date()
+                        overallAverage: benchmark.overallAverage,
+                        isDeleted: benchmark.isDeleted,
+                        createdAt: benchmark.createdAt,
+                        updatedAt: benchmark.updatedAt
                     }, { new: true });
                     console.log(`AsyncPerformanceBenchmark ${benchmark.mongoId} updated from MySQL to MongoDB`);
                 }

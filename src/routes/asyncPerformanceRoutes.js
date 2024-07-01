@@ -14,12 +14,12 @@ const getController = async () => {
     throw new Error('No database connection available');
 };
 
-router.post('/create', async (req, res) => {
+router.post('/start', async (req, res) => {
     try {
         const controller = await getController();
         await controller.startBenchmark(req, res);
     } catch (error) {
-        console.error('Error in /create route:', error.message);
+        console.error('Error in /start  route:', error.message);
         res.status(500).json({ message: error.message });
     }
 });

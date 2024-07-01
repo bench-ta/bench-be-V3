@@ -1,10 +1,10 @@
 // src/controllers/mysql/memoryUsageController.js
-const MemoryBenchmark = require('../../models/mysql/MemoryBenchmark');
+const MemoryUsageBenchmark = require('../../models/mysql/MemoryUsageBenchmark');
 const os = require('os');
 const si = require('systeminformation');
 const escomplex = require('escomplex');
 const { performance } = require('perf_hooks');
-const { ObjectId } = require('bson');
+const { ObjectId } = require('bson'); // Tambahkan pustaka bson
 
 exports.startBenchmark = async (req, res) => {
     const { testType, testCodes, testConfig, javascriptType } = req.body;
@@ -16,7 +16,6 @@ exports.startBenchmark = async (req, res) => {
     try {
         const results = testCodes.map((code, index) => {
             let iterationsResults = [];
-            let totalExecutionTime = 0;
             let complexityReport = escomplex.analyse(code);
             let complexitySummary = {
                 cyclomatic: complexityReport.aggregate.cyclomatic,
@@ -29,14 +28,12 @@ exports.startBenchmark = async (req, res) => {
                 eval(code);
                 const endTime = performance.now();
                 const executionTime = endTime - startTime;
-                totalExecutionTime += executionTime;
                 iterationsResults.push({
                     iteration: i + 1,
                     executionTime: `${executionTime.toFixed(2)} ms`
                 });
             }
-            const averageMemoryUsage = totalExecutionTime / testConfig.iterations;
-
+            const averageMemoryUsage = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.executionTime), 0) / testConfig.iterations;
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
@@ -46,18 +43,18 @@ exports.startBenchmark = async (req, res) => {
             };
         });
 
-        const totalAverageMemoryUsage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
+        const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
 
+        // Buat mongoId baru menggunakan ObjectId dari bson
         const mongoId = new ObjectId().toString();
 
-        const benchmark = await MemoryBenchmark.create({
-            mongoId,
+        const benchmark = await MemoryUsageBenchmark.create({
+            mongoId, // Menggunakan mongoId yang baru dibuat
             javascriptType,
             testType,
-            testCodes,
             testConfig,
             results,
-            totalAverageMemoryUsage: `${totalAverageMemoryUsage.toFixed(2)} ms`
+            overallAverage: `${overallAverage.toFixed(2)} ms`
         });
 
         const cpuInfo = os.cpus()[0];
@@ -99,7 +96,7 @@ exports.startBenchmark = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: `Average memory usage from ${testConfig.iterations} iterations: ${totalAverageMemoryUsage.toFixed(2)} ms`,
+            message: `Average memory usage from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} ms`,
             data: benchmark,
             hardware: hardwareInfo
         });

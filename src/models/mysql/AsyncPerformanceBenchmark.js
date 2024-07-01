@@ -1,3 +1,4 @@
+// src/models/mysql/AsyncPerformanceBenchmark.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/mysql');
 
@@ -9,14 +10,14 @@ const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', 
     },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
+        allowNull: true
     },
-    testType: {
+    javascriptType: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    testCode: {
-        type: DataTypes.JSON,
+    testType: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     testConfig: {
@@ -27,27 +28,25 @@ const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', 
         type: DataTypes.JSON,
         allowNull: false
     },
-    averageAsyncExecution: {
-        type: DataTypes.FLOAT
-    },
-    totalAverageAsyncExecution: {
-        type: DataTypes.STRING
-    },
-    timestamp: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
-    },
-    javascriptType: {
+    overallAverage: {
         type: DataTypes.STRING,
         allowNull: false
     },
     isDeleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    },
+    updatedAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: 'AsyncPerformanceBenchmarks',
-    timestamps: false // Menggunakan timestamp manual
+    timestamps: false
 });
 
 module.exports = AsyncPerformanceBenchmark;

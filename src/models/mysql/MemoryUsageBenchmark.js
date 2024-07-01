@@ -1,7 +1,8 @@
+// src/models/mysql/MemoryUsageBenchmark.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/mysql');
 
-const MemoryBenchmark = sequelize.define('MemoryBenchmark', {
+const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -9,14 +10,14 @@ const MemoryBenchmark = sequelize.define('MemoryBenchmark', {
     },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true // MongoDB ObjectId akan disimpan sebagai string
+        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
     },
-    testType: {
+    javascriptType: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    testCodes: {
-        type: DataTypes.JSON,
+    testType: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     testConfig: {
@@ -27,19 +28,7 @@ const MemoryBenchmark = sequelize.define('MemoryBenchmark', {
         type: DataTypes.JSON,
         allowNull: false
     },
-    averageMemoryUsage: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    totalAverageMemoryUsage: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    timestamp: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
-    },
-    javascriptType: {
+    overallAverage: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -56,8 +45,8 @@ const MemoryBenchmark = sequelize.define('MemoryBenchmark', {
         defaultValue: DataTypes.NOW
     }
 }, {
-    tableName: 'MemoryBenchmarks',
+    tableName: 'MemoryUsageBenchmarks',
     timestamps: false // Menggunakan timestamp manual
 });
 
-module.exports = MemoryBenchmark;
+module.exports = MemoryUsageBenchmark;

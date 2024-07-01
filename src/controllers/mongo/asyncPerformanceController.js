@@ -1,9 +1,8 @@
-const { JSDOM } = require('jsdom');
+// src/controllers/mongo/asyncPerformanceController.js
+const AsyncPerformanceBenchmark = require('../../models/mongo/AsyncPerformanceBenchmark');
 const os = require('os');
 const si = require('systeminformation');
-const escomplex = require('escomplex');
 const { performance } = require('perf_hooks');
-const PageLoadBenchmark = require('../../models/mongo/PageLoadBenchmark'); // or MySQL based on your setup
 
 exports.startBenchmark = async (req, res) => {
     const { testType, testCodes, testConfig, javascriptType } = req.body;
@@ -13,57 +12,35 @@ exports.startBenchmark = async (req, res) => {
     }
 
     try {
-        const results = testCodes.map((code, index) => {
+        const results = await Promise.all(testCodes.map(async (code, index) => {
             let iterationsResults = [];
-            let totalExecutionTime = 0;
-            let complexityReport = escomplex.analyse(code);
-            let complexitySummary = {
-                cyclomatic: complexityReport.aggregate.cyclomatic,
-                sloc: complexityReport.aggregate.sloc,
-                halstead: complexityReport.aggregate.halstead,
-                maintainability: complexityReport.aggregate.maintainability
-            };
-
             for (let i = 0; i < testConfig.iterations; i++) {
-                const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`);
-                const { window } = dom;
-                global.window = window;
-                global.document = window.document;
-
                 const startTime = performance.now();
-                eval(code);
+                await eval(`(async () => { ${code} })()`);
                 const endTime = performance.now();
                 const executionTime = endTime - startTime;
-                totalExecutionTime += executionTime;
                 iterationsResults.push({
                     iteration: i + 1,
                     executionTime: `${executionTime.toFixed(2)} ms`
                 });
-
-                // Cleanup
-                delete global.window;
-                delete global.document;
             }
-            const averagePageLoadTime = totalExecutionTime / testConfig.iterations;
-
+            const averageExecutionTime = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.executionTime), 0) / testConfig.iterations;
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
                 iterationsResults: iterationsResults,
-                averagePageLoadTime: `${averagePageLoadTime.toFixed(2)} ms`,
-                complexity: complexitySummary
+                averageExecutionTime: `${averageExecutionTime.toFixed(2)} ms`
             };
-        });
+        }));
 
-        const totalAveragePageLoadTime = results.reduce((acc, curr) => acc + parseFloat(curr.averagePageLoadTime), 0) / results.length;
+        const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageExecutionTime), 0) / results.length;
 
-        const benchmark = new PageLoadBenchmark({
+        const benchmark = new AsyncPerformanceBenchmark({
             testType,
             testCodes,
             testConfig,
             results,
-            averagePageLoadTime: results.map(r => r.averagePageLoadTime).join(', '), // Store individual averages as comma-separated string
-            totalAveragePageLoadTime: `${totalAveragePageLoadTime.toFixed(2)} ms`,
+            overallAverage: `${overallAverage.toFixed(2)} ms`,
             javascriptType
         });
 
@@ -84,7 +61,7 @@ exports.startBenchmark = async (req, res) => {
             systemInfo = await si.getStaticData();
         } catch (error) {
             console.error('Failed to retrieve system information:', error);
-            systemInfo = {}; // Use an empty object if unable to retrieve system info
+            systemInfo = {};
         }
 
         const hardwareInfo = {
@@ -108,7 +85,7 @@ exports.startBenchmark = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: `Average page load time from ${testConfig.iterations} iterations: ${totalAveragePageLoadTime.toFixed(2)} ms`,
+            message: `Average execution time from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} ms`,
             data: benchmark,
             hardware: hardwareInfo
         });

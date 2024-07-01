@@ -1,5 +1,5 @@
 // src/controllers/mongo/memoryUsageController.js
-const MemoryBenchmark = require('../../models/mongo/MemoryBenchmark');
+const MemoryUsageBenchmark = require('../../models/mongo/MemoryUsageBenchmark');
 const os = require('os');
 const si = require('systeminformation');
 const escomplex = require('escomplex');
@@ -15,7 +15,6 @@ exports.startBenchmark = async (req, res) => {
     try {
         const results = testCodes.map((code, index) => {
             let iterationsResults = [];
-            let totalExecutionTime = 0;
             let complexityReport = escomplex.analyse(code);
             let complexitySummary = {
                 cyclomatic: complexityReport.aggregate.cyclomatic,
@@ -28,36 +27,30 @@ exports.startBenchmark = async (req, res) => {
                 eval(code);
                 const endTime = performance.now();
                 const executionTime = endTime - startTime;
-                totalExecutionTime += executionTime;
                 iterationsResults.push({
                     iteration: i + 1,
                     executionTime: `${executionTime.toFixed(2)} ms`
                 });
             }
-            const averageMemoryUsage = totalExecutionTime / testConfig.iterations;
-
+            const averageMemoryUsage = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.executionTime), 0) / testConfig.iterations;
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
                 iterationsResults: iterationsResults,
-                averageMemoryUsage: averageMemoryUsage,
+                averageMemoryUsage: `${averageMemoryUsage.toFixed(2)} ms`,
                 complexity: complexitySummary
             };
         });
 
-        const totalAverageMemoryUsage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
+        const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
 
-        const benchmark = new MemoryBenchmark({
+        const benchmark = await MemoryUsageBenchmark.create({
+            javascriptType,
             testType,
-            testCodes,
             testConfig,
             results,
-            averageMemoryUsage: totalAverageMemoryUsage.toFixed(2),
-            totalAverageMemoryUsage: `${totalAverageMemoryUsage.toFixed(2)} ms`,
-            javascriptType
+            overallAverage: `${overallAverage.toFixed(2)} ms`
         });
-
-        await benchmark.save();
 
         const cpuInfo = os.cpus()[0];
         const totalMemoryGB = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
@@ -98,7 +91,7 @@ exports.startBenchmark = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: `Average memory usage from ${testConfig.iterations} iterations: ${totalAverageMemoryUsage.toFixed(2)} ms`,
+            message: `Average memory usage from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} ms`,
             data: benchmark,
             hardware: hardwareInfo
         });

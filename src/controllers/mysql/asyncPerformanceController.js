@@ -1,3 +1,4 @@
+// src/controllers/mysql/asyncPerformanceController.js
 const AsyncPerformanceBenchmark = require('../../models/mysql/AsyncPerformanceBenchmark');
 const os = require('os');
 const si = require('systeminformation');
@@ -14,40 +15,34 @@ exports.startBenchmark = async (req, res) => {
     try {
         const results = await Promise.all(testCodes.map(async (code, index) => {
             let iterationsResults = [];
-            let totalExecutionTime = 0;
-
             for (let i = 0; i < testConfig.iterations; i++) {
                 const startTime = performance.now();
-                await eval(code);
+                await eval(`(async () => { ${code} })()`);
                 const endTime = performance.now();
                 const executionTime = endTime - startTime;
-                totalExecutionTime += executionTime;
                 iterationsResults.push({
                     iteration: i + 1,
                     executionTime: `${executionTime.toFixed(2)} ms`
                 });
             }
-            const averageAsyncExecution = totalExecutionTime / testConfig.iterations;
-
+            const averageExecutionTime = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.executionTime), 0) / testConfig.iterations;
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
                 iterationsResults: iterationsResults,
-                averageAsyncExecution: `${averageAsyncExecution.toFixed(2)} ms`
+                averageExecutionTime: `${averageExecutionTime.toFixed(2)} ms`
             };
         }));
 
-        const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageAsyncExecution), 0) / results.length;
-
-        const mongoId = new ObjectId().toString();
+        const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageExecutionTime), 0) / results.length;
 
         const benchmark = await AsyncPerformanceBenchmark.create({
-            mongoId,
+            mongoId: new ObjectId().toString(), // Create a new MongoDB ID
             javascriptType,
             testType,
             testConfig,
             results,
-            totalAverageAsyncExecution: `${overallAverage.toFixed(2)} ms`
+            overallAverage: `${overallAverage.toFixed(2)} ms`
         });
 
         const cpuInfo = os.cpus()[0];
@@ -65,7 +60,7 @@ exports.startBenchmark = async (req, res) => {
             systemInfo = await si.getStaticData();
         } catch (error) {
             console.error('Failed to retrieve system information:', error);
-            systemInfo = {}; // Use an empty object if unable to retrieve system info
+            systemInfo = {};
         }
 
         const hardwareInfo = {
@@ -89,7 +84,7 @@ exports.startBenchmark = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: `Average async execution time from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} ms`,
+            message: `Average execution time from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} ms`,
             data: benchmark,
             hardware: hardwareInfo
         });

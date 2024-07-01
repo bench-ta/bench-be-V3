@@ -1,42 +1,40 @@
+// src/models/mongo/AsyncPerformanceBenchmark.js
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const AsyncPerformanceBenchmarkSchema = new mongoose.Schema({
-  testType: {
-    type: String,
-    required: true,
-  },
-  testCode: {
-    type: [String],
-    required: true,
-  },
-  testConfig: {
-    type: Object,
-    required: true,
-  },
-  results: {
-    type: Array,
-    required: true,
-  },
-  averageAsyncExecution: {
-    type: Number,
-  },
-  totalAverageAsyncExecution: {
-    type: String,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-  javascriptType: {  
-    type: String,
-    required: true
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false
-  }
+const AsyncPerformanceBenchmarkSchema = new Schema({
+    javascriptType: {
+        type: String,
+        required: true
+    },
+    testType: {
+        type: String,
+        required: true
+    },
+    testConfig: {
+        type: Object,
+        required: true
+    },
+    results: {
+        type: Array,
+        required: true
+    },
+    overallAverage: {
+        type: String,
+        required: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
 }, { timestamps: true });
 
-const AsyncPerformanceBenchmark = mongoose.model('AsyncPerformanceBenchmark', AsyncPerformanceBenchmarkSchema);
-
-module.exports = AsyncPerformanceBenchmark;
+module.exports = mongoose.model('AsyncPerformanceBenchmark', AsyncPerformanceBenchmarkSchema);
