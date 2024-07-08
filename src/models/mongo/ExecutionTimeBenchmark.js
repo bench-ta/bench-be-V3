@@ -1,4 +1,4 @@
-// src/models/mongo/ExecutionTime.js
+// src/models/mongo/ExecutionTimeBenchmark.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -23,6 +23,10 @@ const ExecutionTimeSchema = new Schema({
         type: String,
         required: true
     },
+    totalExecutionTime: {
+        type: String,
+        required: true
+    },
     isDeleted: {
         type: Boolean,
         default: false
@@ -37,4 +41,4 @@ const ExecutionTimeSchema = new Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('ExecutionTime', ExecutionTimeSchema);
+module.exports = mongoose.model('ExecutionTimeBenchmark', ExecutionTimeSchema);

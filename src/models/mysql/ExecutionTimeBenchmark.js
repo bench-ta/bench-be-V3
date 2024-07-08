@@ -1,9 +1,9 @@
-// src/models/mysql/ExecutionTime.js
+// src/models/mysql/ExecutionTimeBenchmark.js
 
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/mysql');
 
-const ExecutionTime = sequelize.define('ExecutionTime', {
+const ExecutionTimeBenchmark = sequelize.define('ExecutionTimeBenchmark', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -11,8 +11,7 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
     },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
-        
+        allowNull: true 
     },
     javascriptType: {
         type: DataTypes.STRING,
@@ -34,6 +33,10 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    totalExecutionTime: {  
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     isDeleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
@@ -47,8 +50,8 @@ const ExecutionTime = sequelize.define('ExecutionTime', {
         defaultValue: DataTypes.NOW
     }
 }, {
-    tableName: 'ExecutionTimes',
-    timestamps: false // Menggunakan timestamp manual
+    tableName: 'ExecutionTimeBenchmarks',
+    timestamps: false 
 });
 
-module.exports = ExecutionTime;
+module.exports = ExecutionTimeBenchmark;

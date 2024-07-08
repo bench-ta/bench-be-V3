@@ -1,5 +1,5 @@
-const ExecutionTimeMongo = require('../models/mongo/ExecutionTime');
-const ExecutionTimeMySQL = require('../models/mysql/ExecutionTime');
+const ExecutionTimeMongo = require('../models/mongo/ExecutionTimeBenchmark');
+const ExecutionTimeMySQL = require('../models/mysql/ExecutionTimeBenchmark');
 const { checkDatabaseStatus } = require('../config/handlers');
 const { ObjectId } = require('bson');
 
@@ -27,6 +27,7 @@ const syncExecutionTime = async () => {
                     testConfig: execTime.testConfig,
                     results: execTime.results,
                     overallAverage: execTime.overallAverage,
+                    totalExecutionTime: execTime.totalExecutionTime,  // Menambahkan totalExecutionTime
                     isDeleted: execTime.isDeleted,
                     createdAt: execTime.createdAt,
                     updatedAt: execTime.updatedAt
@@ -39,6 +40,7 @@ const syncExecutionTime = async () => {
                     testConfig: execTime.testConfig,
                     results: execTime.results,
                     overallAverage: execTime.overallAverage,
+                    totalExecutionTime: execTime.totalExecutionTime,  // Menambahkan totalExecutionTime
                     isDeleted: execTime.isDeleted,
                     createdAt: execTime.createdAt,
                     updatedAt: execTime.updatedAt
@@ -60,6 +62,7 @@ const syncExecutionTime = async () => {
                         testConfig: execTime.testConfig,
                         results: execTime.results,
                         overallAverage: execTime.overallAverage,
+                        totalExecutionTime: execTime.totalExecutionTime,  // Menambahkan totalExecutionTime
                         isDeleted: execTime.isDeleted,
                         createdAt: execTime.createdAt,
                         updatedAt: execTime.updatedAt
@@ -73,6 +76,7 @@ const syncExecutionTime = async () => {
                         testConfig: execTime.testConfig,
                         results: execTime.results,
                         overallAverage: execTime.overallAverage,
+                        totalExecutionTime: execTime.totalExecutionTime,  // Menambahkan totalExecutionTime
                         isDeleted: execTime.isDeleted,
                         createdAt: execTime.createdAt,
                         updatedAt: execTime.updatedAt

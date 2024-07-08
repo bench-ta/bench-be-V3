@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sumup/performance-observer": "^1.0.2",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "bson": "^6.7.0",
@@ -19,19 +20,27 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsdom": "^24.1.0",
+    "jsdom-global": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.3",
     "mysql": "^2.18.1",
     "mysql2": "^3.10.1",
     "node-fetch": "^2.7.0",
     "nodemon": "^3.1.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sequelize": "^6.37.3",
     "speed-test": "^3.0.0",
     "systeminformation": "^5.22.10",
     "uuid": "^10.0.0",
-    "vue": "^3.4.30"
+    "v8": "^0.1.0",
+    "vue": "^3.4.31"
   },
   "devDependencies": {
+    "@babel/core": "^7.24.7",
+    "@babel/preset-env": "^7.24.7",
+    "@babel/preset-react": "^7.24.7",
+    "@babel/preset-typescript": "^7.24.7",
     "complexity-report": "^2.0.0-alpha",
     "escomplex": "^2.0.0-alpha"
   }
