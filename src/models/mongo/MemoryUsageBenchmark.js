@@ -23,6 +23,10 @@ const MemoryUsageBenchmarkSchema = new Schema({
         type: String,
         required: true
     },
+    totalMemoryUsage: {
+        type: String,
+        required: true
+    },
     isDeleted: {
         type: Boolean,
         default: false

@@ -16,7 +16,7 @@ function getMemoryUsage() {
 async function transpileCode(code, type) {
     const presets = [];
     if (type === 'React' || type === 'Vue') {
-        presets.push('@babel/preset-react'); // Also handles JSX for Vue if necessary
+        presets.push('@babel/preset-react');
     }
     if (type === 'Angular') {
         presets.push('@babel/preset-typescript');
@@ -25,19 +25,21 @@ async function transpileCode(code, type) {
     try {
         const result = await babel.transformAsync(code, {
             presets: presets,
-            filename: `inputCode.${type.toLowerCase()}` // Helps Babel recognize the file type for transpilation
+            filename: `inputCode.${type.toLowerCase()}`
         });
-        return result.code; // Transpiled JavaScript code
+        return result.code;
     } catch (error) {
         console.error('Error during code transpilation:', error.message);
-        throw new Error('Transpilation failed: ' + error.message); // Include specific error message
+        throw new Error('Transpilation failed: ' + error.message);
     }
-}exports.startBenchmark = async (req, res) => {
+}
+
+exports.startBenchmark = async (req, res) => {
     const { testType, testCodes, testConfig, javascriptType } = req.body;
     const warmupIterations = 5; // Number of warmup iterations
 
     if (!testType || !testCodes || !testConfig || !javascriptType) {
-        return res.status(400).json({ success: false, error: "Please provide all required fields." });
+        return res.status(400).json({ success: false, message: "Please provide all required fields." });
     }
 
     try {
@@ -55,17 +57,11 @@ async function transpileCode(code, type) {
 
             // Warmup iterations
             for (let i = 0; i < warmupIterations; i++) {
-                if (global.gc) {
-                    global.gc();
-                }
                 const functionToTest = new Function('return ' + code);
                 functionToTest();
             }
 
             for (let i = 0; i < testConfig.iterations; i++) {
-                if (global.gc) {
-                    global.gc();
-                }
                 const startMem = getMemoryUsage();
                 const startTime = performance.now();
                 const functionToTest = new Function('return ' + code);
@@ -82,17 +78,23 @@ async function transpileCode(code, type) {
                 });
             }
             const averageMemoryUsage = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.memoryUsed), 0) / testConfig.iterations;
+            const totalMemoryUsage = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.memoryUsed), 0);
+            const totalExecutionTime = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.executionTime), 0);
 
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
                 iterationsResults: iterationsResults,
                 averageMemoryUsage: `${averageMemoryUsage.toFixed(2)} KB`,
+                totalMemoryUsage: `${totalMemoryUsage.toFixed(2)} KB`,
+                totalExecutionTime: `${totalExecutionTime.toFixed(2)} ms`,
                 complexity: complexitySummary
             };
         });
 
         const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
+        const totalMemoryUsageSum = results.reduce((acc, curr) => acc + parseFloat(curr.totalMemoryUsage), 0);
+        const totalExecutionTimeSum = results.reduce((acc, curr) => acc + parseFloat(curr.totalExecutionTime), 0);
 
         const mongoId = new ObjectId().toString();
 
@@ -102,7 +104,9 @@ async function transpileCode(code, type) {
             testType,
             testConfig,
             results,
-            overallAverage: `${overallAverage.toFixed(2)} KB`
+            overallAverage: `${overallAverage.toFixed(2)} KB`,
+            totalMemoryUsage: `${totalMemoryUsageSum.toFixed(2)} KB`,
+            totalExecutionTime: `${totalExecutionTimeSum.toFixed(2)} ms`
         });
 
         const cpuInfo = os.cpus()[0];
@@ -143,12 +147,13 @@ async function transpileCode(code, type) {
 
         res.status(201).json({
             success: true,
+            status: '201 Created',
             message: `Average memory usage from ${testConfig.iterations} iterations: ${overallAverage.toFixed(2)} KB`,
             data: benchmark,
             hardware: hardwareInfo
         });
     } catch (error) {
         console.error('Error during benchmark execution:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };

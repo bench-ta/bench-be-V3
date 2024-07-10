@@ -32,6 +32,10 @@ const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    totalMemoryUsage: {  
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     isDeleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false

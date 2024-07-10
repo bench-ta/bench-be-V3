@@ -1,8 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
 
 // Import koneksi database
+app.use(cors());
+
 const { connectMongoDB } = require('./src/config/mongo');
 const { connectMySQL } = require('./src/config/mysql');
 
@@ -19,15 +22,16 @@ const executionTimeRoutes = require('./src/routes/executionTimeRoutes');
 const memoryUsageRoutes = require('./src/routes/memoryUsageRoutes');
 const pageLoadRoutes = require('./src/routes/pageLoadRoutes');
 const asyncPerformanceRoutes = require('./src/routes/asyncPerformanceRoutes');
+const verifyToken = require('./src/middleware/auth');
 
 app.use(express.json());
 
 // Setup routes
 app.use('/api/auth', authRoutes);
-app.use('/api/execution-time', executionTimeRoutes);
-app.use('/api/memory-usage', memoryUsageRoutes);
-app.use('/api/page-load', pageLoadRoutes);
-app.use('/api/async-performance', asyncPerformanceRoutes);
+app.use('/api/execution-time', verifyToken,executionTimeRoutes);
+app.use('/api/memory-usage',verifyToken, memoryUsageRoutes);
+app.use('/api/page-load', verifyToken,pageLoadRoutes);
+app.use('/api/async-performance', verifyToken,asyncPerformanceRoutes);
 
 const startServer = async () => {
     await connectMongoDB();
