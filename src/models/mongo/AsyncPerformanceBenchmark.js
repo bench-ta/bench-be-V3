@@ -3,6 +3,12 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const AsyncPerformanceBenchmarkSchema = new Schema({
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+
+    },
     javascriptType: {
         type: String,
         required: true
@@ -20,6 +26,14 @@ const AsyncPerformanceBenchmarkSchema = new Schema({
         required: true
     },
     overallAverage: {
+        type: String,
+        required: true
+    },
+    totalExecutionTime: {
+        type: String,
+        required: true
+    },
+    totalMemoryUsage: {
         type: String,
         required: true
     },

@@ -17,11 +17,13 @@ const syncExecutionTime = async () => {
         const mongoExecutionTimes = await ExecutionTimeMongo.find({ isDeleted: false });
         for (const execTime of mongoExecutionTimes) {
             let mongoIdStr = execTime._id.toString();
+            let userIdStr = execTime.userId.toString();
             const existingExecTime = await ExecutionTimeMySQL.findOne({ where: { mongoId: mongoIdStr } });
 
             if (!existingExecTime) {
                 await ExecutionTimeMySQL.create({
                     mongoId: mongoIdStr,
+                    userId: userIdStr,
                     javascriptType: execTime.javascriptType,
                     testType: execTime.testType,
                     testConfig: execTime.testConfig,
@@ -35,6 +37,7 @@ const syncExecutionTime = async () => {
                 console.log(`ExecutionTime ${mongoIdStr} added from MongoDB to MySQL`);
             } else if (new Date(execTime.updatedAt) > new Date(existingExecTime.updatedAt)) {
                 await ExecutionTimeMySQL.update({
+                    userId: userIdStr,
                     javascriptType: execTime.javascriptType,
                     testType: execTime.testType,
                     testConfig: execTime.testConfig,
@@ -57,6 +60,7 @@ const syncExecutionTime = async () => {
                 if (!existingExecTime) {
                     let newExecTime = new ExecutionTimeMongo({
                         _id: execTime.mongoId, // Use MySQL's mongoId to keep IDs consistent
+                        userId: execTime.userId,
                         javascriptType: execTime.javascriptType,
                         testType: execTime.testType,
                         testConfig: execTime.testConfig,
@@ -72,6 +76,7 @@ const syncExecutionTime = async () => {
                 } else if (new Date(execTime.updatedAt) > new Date(existingExecTime.updatedAt)) {
                     await ExecutionTimeMongo.findByIdAndUpdate(execTime.mongoId, {
                         javascriptType: execTime.javascriptType,
+                        userId: execTime.userId,
                         testType: execTime.testType,
                         testConfig: execTime.testConfig,
                         results: execTime.results,

@@ -1,7 +1,14 @@
+// src/models/mongo/PageLoadBenchmark.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const PageLoadBenchmarkSchema = new Schema({
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+
+    },
     javascriptType: {
         type: String,
         required: true
@@ -18,7 +25,19 @@ const PageLoadBenchmarkSchema = new Schema({
         type: Array,
         required: true
     },
-    overallAverage: {
+    overallAveragePageLoadTime: {
+        type: String,
+        required: true
+    },
+    overallAverageMemoryUsage: {
+        type: String,
+        required: true
+    },
+    totalExecutionTime: {
+        type: String,
+        required: true
+    },
+    totalMemoryUsage: {
         type: String,
         required: true
     },

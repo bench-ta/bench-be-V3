@@ -18,16 +18,20 @@ const syncAsyncPerformance = async () => {
         const mongoBenchmarks = await AsyncPerformanceBenchmarkMongo.find({ isDeleted: false });
         for (const benchmark of mongoBenchmarks) {
             let mongoIdStr = benchmark._id.toString();
+            let userIdStr = benchmark.userId.toString();
             const existingBenchmark = await AsyncPerformanceBenchmarkMySQL.findOne({ where: { mongoId: mongoIdStr } });
 
             if (!existingBenchmark) {
                 await AsyncPerformanceBenchmarkMySQL.create({
                     mongoId: mongoIdStr,
+                    userId: userIdStr,
                     javascriptType: benchmark.javascriptType,
                     testType: benchmark.testType,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
                     overallAverage: benchmark.overallAverage,
+                    totalExecutionTime: benchmark.totalExecutionTime,
+                    totalMemoryUsage: benchmark.totalMemoryUsage,
                     isDeleted: benchmark.isDeleted,
                     createdAt: benchmark.createdAt,
                     updatedAt: benchmark.updatedAt
@@ -36,10 +40,13 @@ const syncAsyncPerformance = async () => {
             } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                 await AsyncPerformanceBenchmarkMySQL.update({
                     javascriptType: benchmark.javascriptType,
+                    userId: userIdStr,
                     testType: benchmark.testType,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
                     overallAverage: benchmark.overallAverage,
+                    totalExecutionTime: benchmark.totalExecutionTime,
+                    totalMemoryUsage: benchmark.totalMemoryUsage,
                     isDeleted: benchmark.isDeleted,
                     createdAt: benchmark.createdAt,
                     updatedAt: benchmark.updatedAt
@@ -55,12 +62,15 @@ const syncAsyncPerformance = async () => {
                 const existingBenchmark = await AsyncPerformanceBenchmarkMongo.findById(benchmark.mongoId);
                 if (!existingBenchmark) {
                     let newBenchmark = new AsyncPerformanceBenchmarkMongo({
-                        _id: benchmark.mongoId,
+                        _id: benchmark.mongoId, // Use MySQL's mongoId to keep IDs consistent
+                        userId: benchmark.userId,
                         javascriptType: benchmark.javascriptType,
                         testType: benchmark.testType,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
                         overallAverage: benchmark.overallAverage,
+                        totalExecutionTime: benchmark.totalExecutionTime,
+                        totalMemoryUsage: benchmark.totalMemoryUsage,
                         isDeleted: benchmark.isDeleted,
                         createdAt: benchmark.createdAt,
                         updatedAt: benchmark.updatedAt
@@ -70,10 +80,13 @@ const syncAsyncPerformance = async () => {
                 } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                     await AsyncPerformanceBenchmarkMongo.findByIdAndUpdate(benchmark.mongoId, {
                         javascriptType: benchmark.javascriptType,
+                        userId: benchmark.userId,
                         testType: benchmark.testType,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
                         overallAverage: benchmark.overallAverage,
+                        totalExecutionTime: benchmark.totalExecutionTime,
+                        totalMemoryUsage: benchmark.totalMemoryUsage,
                         isDeleted: benchmark.isDeleted,
                         createdAt: benchmark.createdAt,
                         updatedAt: benchmark.updatedAt

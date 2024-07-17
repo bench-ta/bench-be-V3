@@ -1,6 +1,6 @@
 // src/models/mysql/MemoryUsageBenchmark.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../../config/mysql');
+const { sequelize } = require('../../config/mysql'); // Adjust the path as necessary
 
 const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
     id: {
@@ -8,9 +8,14 @@ const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
         primaryKey: true,
         autoIncrement: true
     },
+    userId: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
+        allowNull: true, // This will store the MongoDB _id as a string
+        defaultValue: null
     },
     javascriptType: {
         type: DataTypes.STRING,
@@ -32,7 +37,7 @@ const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    totalMemoryUsage: {  
+    totalMemoryUsage: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -50,7 +55,7 @@ const MemoryUsageBenchmark = sequelize.define('MemoryUsageBenchmark', {
     }
 }, {
     tableName: 'MemoryUsageBenchmarks',
-    timestamps: false // Menggunakan timestamp manual
+    timestamps: false // Using manually managed timestamps
 });
 
 module.exports = MemoryUsageBenchmark;

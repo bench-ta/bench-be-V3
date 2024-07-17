@@ -4,6 +4,7 @@ const router = express.Router();
 const mongoController = require('../controllers/mongo/memoryUsageController');
 const mysqlController = require('../controllers/mysql/memoryUsageController');
 const { checkDatabaseStatus } = require('../config/handlers');
+const verifyToken = require('../middleware/auth');
 
 const getController = async () => {
     const dbStatus = await checkDatabaseStatus();
@@ -21,6 +22,15 @@ router.post('/start', async (req, res) => {
         await controller.startBenchmark(req, res);
     } catch (error) {
         console.error('Error in /start route:', error.message);
+        res.status(500).json({ message: error.message });
+    }
+});
+router.get('/getall',verifyToken, async (req, res) => {
+    try {
+        const controller = await getController();
+        await controller.getUserBenchmarks(req, res);
+    } catch (error) {
+        console.error('Error in /user-benchmarks route:', error.message);
         res.status(500).json({ message: error.message });
     }
 });

@@ -99,7 +99,9 @@ exports.startBenchmark = async (req, res) => {
         const mongoId = new ObjectId().toString();
 
         const benchmark = await MemoryUsageBenchmark.create({
+           
             mongoId,
+            userId: req.user._id,
             javascriptType,
             testType,
             testConfig,

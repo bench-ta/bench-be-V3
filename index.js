@@ -23,6 +23,7 @@ const memoryUsageRoutes = require('./src/routes/memoryUsageRoutes');
 const pageLoadRoutes = require('./src/routes/pageLoadRoutes');
 const asyncPerformanceRoutes = require('./src/routes/asyncPerformanceRoutes');
 const verifyToken = require('./src/middleware/auth');
+const aggregationRoutes = require('./src/routes/aggregationRoutes');
 
 app.use(express.json());
 
@@ -32,6 +33,7 @@ app.use('/api/execution-time', verifyToken,executionTimeRoutes);
 app.use('/api/memory-usage',verifyToken, memoryUsageRoutes);
 app.use('/api/page-load', verifyToken,pageLoadRoutes);
 app.use('/api/async-performance', verifyToken,asyncPerformanceRoutes);
+app.use('/api/aggregation',aggregationRoutes);
 
 const startServer = async () => {
     await connectMongoDB();

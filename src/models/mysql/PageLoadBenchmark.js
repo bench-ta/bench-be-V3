@@ -1,5 +1,6 @@
+// src/models/mysql/PageLoadBenchmark.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../../config/mysql');
+const { sequelize } = require('../../config/mysql'); // Adjust the path as necessary
 
 const PageLoadBenchmark = sequelize.define('PageLoadBenchmark', {
     id: {
@@ -7,9 +8,14 @@ const PageLoadBenchmark = sequelize.define('PageLoadBenchmark', {
         primaryKey: true,
         autoIncrement: true
     },
+    userId: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true, // MongoDB ObjectId akan disimpan sebagai string
+        allowNull: true, // This will store the MongoDB _id as a string
+        defaultValue: null
     },
     javascriptType: {
         type: DataTypes.STRING,
@@ -27,7 +33,19 @@ const PageLoadBenchmark = sequelize.define('PageLoadBenchmark', {
         type: DataTypes.JSON,
         allowNull: false
     },
-    overallAverage: {
+    overallAveragePageLoadTime: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    overallAverageMemoryUsage: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    totalExecutionTime: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    totalMemoryUsage: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -45,7 +63,7 @@ const PageLoadBenchmark = sequelize.define('PageLoadBenchmark', {
     }
 }, {
     tableName: 'PageLoadBenchmarks',
-    timestamps: false // Menggunakan timestamp manual
+    timestamps: false // Using manually managed timestamps
 });
 
 module.exports = PageLoadBenchmark;

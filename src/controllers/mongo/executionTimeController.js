@@ -30,7 +30,6 @@ async function transpileCode(code, type) {
 
 exports.startBenchmark = async (req, res) => {
     const { testType, testCodes, testConfig, javascriptType } = req.body;
-    const warmupIterations = 5; // Jumlah iterasi pemanasan
 
     if (!testType || !testCodes || !testConfig || !javascriptType) {
         return res.status(400).json({ success: false, error: "Please provide all required fields." });
@@ -50,15 +49,13 @@ exports.startBenchmark = async (req, res) => {
             };
 
             // Iterasi pemanasan
-            for (let i = 0; i < warmupIterations; i++) {
-                const functionToTest = new Function('return ' + code);
-                functionToTest();
-            }
+            
 
             for (let i = 0; i < testConfig.iterations; i++) {
                 const startTime = performance.now();
                 const functionToTest = new Function('return ' + code);
                 functionToTest();
+                eval(code);
                 const endTime = performance.now();
                 const executionTime = endTime - startTime;
 
@@ -87,6 +84,7 @@ exports.startBenchmark = async (req, res) => {
 
         const benchmark = await ExecutionTimeBenchmark.create({
             mongoId,
+            userId: req.user._id,
             javascriptType,
             testType,
             testConfig,
@@ -140,6 +138,19 @@ exports.startBenchmark = async (req, res) => {
         });
     } catch (error) {
         console.error('Error during benchmark execution:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getUserBenchmarks = async (req, res) => {
+    try {
+        const benchmarks = await ExecutionTimeBenchmark.find({ userId: req.user._id });
+        res.status(200).json({
+            success: true,
+            data: benchmarks
+        });
+    } catch (error) {
+        console.error('Error fetching user benchmarks:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };

@@ -1,3 +1,4 @@
+// src/controllers/mysql/asyncPerformanceController.js
 const AsyncPerformanceBenchmark = require('../../models/mysql/AsyncPerformanceBenchmark');
 const os = require('os');
 const si = require('systeminformation');
@@ -7,23 +8,26 @@ const { ObjectId } = require('bson');
 const v8 = require('v8');
 const babel = require('@babel/core');
 
-// Function to get memory usage
+// Fungsi untuk mendapatkan penggunaan memori
 function getMemoryUsage() {
     return v8.getHeapStatistics().used_heap_size;
 }
 
-// Function for code transpilation
+// Fungsi untuk transpilasi kode
 async function transpileCode(code, type) {
     const presets = [];
     if (type === 'React' || type === 'Vue') {
-        presets.push('@babel/preset-react'); // Also handles JSX for Vue if necessary
+        presets.push('@babel/preset-react');
     }
     if (type === 'Angular') {
         presets.push('@babel/preset-typescript');
     }
 
+    // Replace double backslashes with single backslashes
+    const correctedCode = code.replace(/\\\\/g, '\\');
+
     try {
-        const result = await babel.transformAsync(code, {
+        const result = await babel.transformAsync(correctedCode, {
             presets: presets,
             filename: `inputCode.${type.toLowerCase()}` // Helps Babel recognize the file type for transpilation
         });
@@ -34,7 +38,7 @@ async function transpileCode(code, type) {
     }
 }
 
-// Endpoint to start benchmark
+// Endpoint untuk memulai benchmark
 exports.startBenchmark = async (req, res) => {
     const { testType, testCodes, testConfig, javascriptType } = req.body;
 
@@ -45,7 +49,7 @@ exports.startBenchmark = async (req, res) => {
     try {
         const transpiledCodes = await Promise.all(testCodes.map(code => transpileCode(code, javascriptType)));
 
-        const results = transpiledCodes.map((code, index) => {
+        const results = await Promise.all(transpiledCodes.map(async (code, index) => {
             let iterationsResults = [];
             let complexityReport = escomplex.analyse(code);
             let complexitySummary = {
@@ -55,15 +59,20 @@ exports.startBenchmark = async (req, res) => {
                 maintainability: complexityReport.aggregate.maintainability
             };
 
+            let totalExecutionTime = 0;
+            let totalMemoryUsage = 0;
+
             for (let i = 0; i < testConfig.iterations; i++) {
                 const startMem = getMemoryUsage();
                 const startTime = performance.now();
                 const functionToTest = new Function('return ' + code); // Wrap code in return statement for valid syntax
-                functionToTest(); // Evaluating the transpiled code
+                await functionToTest(); // Evaluating the transpiled code
                 const endTime = performance.now();
                 const endMem = getMemoryUsage();
                 const executionTime = endTime - startTime;
                 const memoryUsed = endMem - startMem;
+                totalExecutionTime += executionTime;
+                totalMemoryUsage += memoryUsed;
 
                 iterationsResults.push({
                     iteration: i + 1,
@@ -71,25 +80,36 @@ exports.startBenchmark = async (req, res) => {
                     memoryUsed: `${(memoryUsed / 1024).toFixed(2)} KB`
                 });
             }
-            const averageMemoryUsage = iterationsResults.reduce((acc, curr) => acc + parseFloat(curr.memoryUsed), 0) / testConfig.iterations;
+            const averageMemoryUsage = totalMemoryUsage / testConfig.iterations;
 
             return {
                 testCodeNumber: index + 1,
                 testCode: code,
                 iterationsResults: iterationsResults,
                 averageMemoryUsage: `${averageMemoryUsage.toFixed(2)} KB`,
+                totalExecutionTime: `${totalExecutionTime.toFixed(2)} ms`,
+                totalMemoryUsage: `${(totalMemoryUsage / 1024).toFixed(2)} KB`,
                 complexity: complexitySummary
             };
-        });
+        }));
 
         const overallAverage = results.reduce((acc, curr) => acc + parseFloat(curr.averageMemoryUsage), 0) / results.length;
+        const totalExecutionTimeSum = results.reduce((acc, curr) => acc + parseFloat(curr.totalExecutionTime), 0);
+        const totalMemoryUsageSum = results.reduce((acc, curr) => acc + parseFloat(curr.totalMemoryUsage), 0);
+
+        const mongoId = new ObjectId().toString();
+
 
         const benchmark = await AsyncPerformanceBenchmark.create({
+            mongoId,
+            userId: req.user._id,
             javascriptType,
             testType,
-            testConfig: JSON.stringify(testConfig),
-            results: JSON.stringify(results),
-            overallAverage: `${overallAverage.toFixed(2)} KB`
+            testConfig,
+            results,
+            overallAverage: `${overallAverage.toFixed(2)} KB`,
+            totalExecutionTime: `${totalExecutionTimeSum.toFixed(2)} ms`,
+            totalMemoryUsage: `${(totalMemoryUsageSum / 1024).toFixed(2)} KB`
         });
 
         const cpuInfo = os.cpus()[0];

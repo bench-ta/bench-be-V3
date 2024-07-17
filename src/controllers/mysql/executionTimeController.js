@@ -84,8 +84,9 @@ exports.startBenchmark = async (req, res) => {
         const totalExecutionTimeSum = results.reduce((acc, curr) => acc + parseFloat(curr.totalExecutionTime), 0);
 
         const mongoId = new ObjectId().toString();
-
+        const userId = req.user._id;
         const benchmark = await ExecutionTimeBenchmark.create({
+            userId: req.user._id,
             mongoId,
             javascriptType,
             testType,
@@ -142,5 +143,22 @@ exports.startBenchmark = async (req, res) => {
     } catch (error) {
         console.error('Error during benchmark execution:', error);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+
+exports.getUserBenchmarks = async (req, res) => {
+    try {
+        const benchmarks = await ExecutionTimeBenchmark.findAll({
+            where: { userId: req.user._id }
+        });
+        res.status(200).json({
+            success: true,
+            data: benchmarks
+        });
+    } catch (error) {
+        console.error('Error fetching user benchmarks:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 };

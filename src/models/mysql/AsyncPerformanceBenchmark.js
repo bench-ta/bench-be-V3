@@ -1,6 +1,6 @@
 // src/models/mysql/AsyncPerformanceBenchmark.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../../config/mysql');
+const { sequelize } = require('../../config/mysql'); // Adjust the path as necessary
 
 const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', {
     id: {
@@ -8,9 +8,14 @@ const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', 
         primaryKey: true,
         autoIncrement: true
     },
+    userId: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true
+        allowNull: true, // This will store the MongoDB _id as a string
+        defaultValue: null
     },
     javascriptType: {
         type: DataTypes.STRING,
@@ -32,6 +37,14 @@ const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', 
         type: DataTypes.STRING,
         allowNull: false
     },
+    totalExecutionTime: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    totalMemoryUsage: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     isDeleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
@@ -46,7 +59,7 @@ const AsyncPerformanceBenchmark = sequelize.define('AsyncPerformanceBenchmark', 
     }
 }, {
     tableName: 'AsyncPerformanceBenchmarks',
-    timestamps: false
+    timestamps: false // Using manually managed timestamps
 });
 
 module.exports = AsyncPerformanceBenchmark;

@@ -9,9 +9,13 @@ const ExecutionTimeBenchmark = sequelize.define('ExecutionTimeBenchmark', {
         primaryKey: true,
         autoIncrement: true
     },
+    userId: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     mongoId: {
         type: DataTypes.STRING(24),
-        allowNull: true 
+        allowNull: true || 0 
     },
     javascriptType: {
         type: DataTypes.STRING,

@@ -1,4 +1,3 @@
-// src/controllers/syncMemoryUsage.js
 const MemoryUsageBenchmarkMongo = require('../models/mongo/MemoryUsageBenchmark');
 const MemoryUsageBenchmarkMySQL = require('../models/mysql/MemoryUsageBenchmark');
 const { checkDatabaseStatus } = require('../config/handlers');
@@ -18,16 +17,19 @@ const syncMemoryUsage = async () => {
         const mongoBenchmarks = await MemoryUsageBenchmarkMongo.find({ isDeleted: false });
         for (const benchmark of mongoBenchmarks) {
             let mongoIdStr = benchmark._id.toString();
+            let userIdStr = benchmark.userId.toString();
             const existingBenchmark = await MemoryUsageBenchmarkMySQL.findOne({ where: { mongoId: mongoIdStr } });
 
             if (!existingBenchmark) {
                 await MemoryUsageBenchmarkMySQL.create({
                     mongoId: mongoIdStr,
+                    userId: userIdStr,
                     javascriptType: benchmark.javascriptType,
                     testType: benchmark.testType,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
                     overallAverage: benchmark.overallAverage,
+                    totalMemoryUsage: benchmark.totalMemoryUsage || '0', // Pastikan tidak null
                     isDeleted: benchmark.isDeleted,
                     createdAt: benchmark.createdAt,
                     updatedAt: benchmark.updatedAt
@@ -35,11 +37,13 @@ const syncMemoryUsage = async () => {
                 console.log(`MemoryUsageBenchmark ${mongoIdStr} added from MongoDB to MySQL`);
             } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                 await MemoryUsageBenchmarkMySQL.update({
+                    userId: userIdStr,
                     javascriptType: benchmark.javascriptType,
                     testType: benchmark.testType,
                     testConfig: benchmark.testConfig,
                     results: benchmark.results,
                     overallAverage: benchmark.overallAverage,
+                    totalMemoryUsage: benchmark.totalMemoryUsage || '0', // Pastikan tidak null
                     isDeleted: benchmark.isDeleted,
                     createdAt: benchmark.createdAt,
                     updatedAt: benchmark.updatedAt
@@ -56,11 +60,13 @@ const syncMemoryUsage = async () => {
                 if (!existingBenchmark) {
                     let newBenchmark = new MemoryUsageBenchmarkMongo({
                         _id: benchmark.mongoId, // Use MySQL's mongoId to keep IDs consistent
+                        userId: benchmark.userId,
                         javascriptType: benchmark.javascriptType,
                         testType: benchmark.testType,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
                         overallAverage: benchmark.overallAverage,
+                        totalMemoryUsage: benchmark.totalMemoryUsage || '0', // Pastikan tidak null
                         isDeleted: benchmark.isDeleted,
                         createdAt: benchmark.createdAt,
                         updatedAt: benchmark.updatedAt
@@ -70,10 +76,12 @@ const syncMemoryUsage = async () => {
                 } else if (new Date(benchmark.updatedAt) > new Date(existingBenchmark.updatedAt)) {
                     await MemoryUsageBenchmarkMongo.findByIdAndUpdate(benchmark.mongoId, {
                         javascriptType: benchmark.javascriptType,
+                        userId: benchmark.userId,
                         testType: benchmark.testType,
                         testConfig: benchmark.testConfig,
                         results: benchmark.results,
                         overallAverage: benchmark.overallAverage,
+                        totalMemoryUsage: benchmark.totalMemoryUsage || '0', // Pastikan tidak null
                         isDeleted: benchmark.isDeleted,
                         createdAt: benchmark.createdAt,
                         updatedAt: benchmark.updatedAt
