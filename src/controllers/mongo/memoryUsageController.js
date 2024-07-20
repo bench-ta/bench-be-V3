@@ -159,3 +159,17 @@ exports.startBenchmark = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
+exports.getUserBenchmarks = async (req, res) => {
+    try {
+        const benchmarks = await  MemoryUsageBenchmark.find({ userId: req.user._id });
+        res.status(200).json({
+            success: true,
+            data: benchmarks
+        });
+    } catch (error) {
+        console.error('Error fetching user benchmarks:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
